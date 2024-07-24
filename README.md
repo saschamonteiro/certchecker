@@ -1,3 +1,4 @@
+[![Go Build Cert Checker](https://github.com/saschamonteiro/certchecker/actions/workflows/go.yml/badge.svg)](https://github.com/saschamonteiro/certchecker/actions/workflows/go.yml)
 # Cert Checker / TLS Scan
 
 A utility to scan for TLS certificates in a network segment in CIDR format to quickly find expired certificates.  

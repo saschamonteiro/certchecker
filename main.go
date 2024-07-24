@@ -22,13 +22,13 @@ func main() {
 	skipNoDnsFound := flag.Bool("skipnodns", false, "skip no dns found")
 	htmlOut := flag.String("html", "", "html output file")
 	jsonOut := flag.String("json", "", "json output file")
-	version := flag.Bool("version", false, "version")
-	if *version {
+	ver := flag.Bool("v", false, fmt.Sprintf("version sha:%s buildtime:%s", sha1ver, buildTime))
+	flag.Parse()
+	if *ver {
 		fmt.Printf("version: %s\n", sha1ver)
 		fmt.Printf("build time: %s\n", buildTime)
 		os.Exit(0)
 	}
-	flag.Parse()
 
 	app.StartTlsCollect(*cidrAddressList, *portList, *skipNoDnsFound, Assets, *htmlOut, *jsonOut)
 

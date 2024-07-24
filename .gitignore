@@ -2,3 +2,4 @@ certs*.html
 tlsscan_*
 *.json
 Makefile
+certchecker_*
