@@ -1,0 +1,31 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Release Cert Checker
+
+on: 
+  push:
+    tags:
+    - '*'
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Build
+      run: go build -ldflags "-s -w -X main.sha1ver=`git rev-parse HEAD` -X main.buildTime=`date +'%Y-%m-%d_%T%Z'`" -o certchecker_linux main.go
+      env:
+        CGO_ENABLED: 0
+
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "certchecker_linux"
+        token: ${{ secrets.GITHUB_TOKEN }}

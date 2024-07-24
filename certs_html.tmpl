@@ -1,0 +1,54 @@
+<html>
+<head>
+<style>
+table, th, td {
+  border: 1px solid;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.expired_true {
+  background-color: red;
+}
+.verified_false {
+  background-color: yellow;
+}
+.sni_true {
+  background-color: green;
+}
+</style>
+</head>
+<h1>Certs</h1>
+<table>
+<tr>
+<th>HostIP</th>
+<th>HostDNS</th>
+<th>HostPort</th>
+<th>Hostname Verified</th>
+<th>SNI Verified</th>
+<th>Subject CN</th>
+<th>DNS Names</th>
+<th>IP Addresses</th>
+<th>Issuer</th>
+<th>Expiry</th>
+<th>Expired</th>
+</tr>
+
+{{range .TlsCerts }} 
+<tr>
+<td>{{.HostIP}}</td> 
+<td>{{.HostDNS}}</td> 
+<td>{{.HostPort}}</td> 
+<td class="verified_{{.HostNameVerified}}">{{.HostNameVerified}}</td> 
+<td class="sni_{{.SNIVerified}}">{{.SNIVerified}}</td> 
+<td>{{.SubjectCN}}</td> 
+<td>{{.DNSNames}}</td> 
+<td>{{.IPAddresses}}</td> 
+<td>{{.Issuer}}</td> 
+<td>{{.Expiry}}</td> 
+<td class="expired_{{.Expired}}">{{.Expired}}</td> 
+</tr>
+{{end}}	
+</table>
+</html>
