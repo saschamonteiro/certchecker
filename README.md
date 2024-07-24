@@ -5,6 +5,8 @@ A utility to scan for TLS certificates in a network segment in CIDR format to qu
 
 This is written in GO and the assets are currently only build for Linux amd64.  
 
+The concurrency for host cert checking is currently set to 128.
+
 ## Usage
 ### Linux amd64
 ```
