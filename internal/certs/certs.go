@@ -1,3 +1,4 @@
+// package certs holds the functions related to TLS certificates
 package certs
 
 import (
@@ -8,6 +9,7 @@ import (
 	"time"
 )
 
+// TlsCert holds the data for a TLS certificate
 type TlsCert struct {
 	HostNameVerified bool      `json:"hostnameVerified"`
 	SubjectCN        string    `json:"subjectCN"`
@@ -21,10 +23,8 @@ type TlsCert struct {
 	HostPort         string    `json:"hostPort"`
 	SNIVerified      bool      `json:"sniVerified"`
 }
-type TlsPageData struct {
-	TlsCerts []TlsCert
-}
 
+// CheckCert will connect to the host and check if the certificate is valid
 func CheckCert(server, port, ip string) TlsCert {
 	hostnameVerified := false
 	SNIVerified := false
@@ -32,11 +32,8 @@ func CheckCert(server, port, ip string) TlsCert {
 	if server != ip {
 		conf.ServerName = server
 	}
-	// fmt.Printf("\n --> Start: %s\n", server)
 	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: 1 * time.Second}, "tcp", ip+":"+port, conf)
 	if err != nil {
-		// fmt.Printf("DialWithSNI Error %v\n", err)
-		// fmt.Println("SecureTLS failed, Try InsecureSkipVerify", err)
 		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: 1 * time.Second}, "tcp", ip+":"+port, &tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			if strings.Contains(err.Error(), "network is unreachable") || strings.Contains(err.Error(), "i/o timeout") || strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "no such host") || strings.Contains(err.Error(), "no route to host") {
@@ -46,7 +43,6 @@ func CheckCert(server, port, ip string) TlsCert {
 			}
 			return TlsCert{}
 		} else {
-			// fmt.Println("trying hostname validation")
 			if strings.Split(server, ":")[0] == conn.ConnectionState().PeerCertificates[0].Subject.CommonName {
 				hostnameVerified = true
 			} else {
@@ -63,21 +59,13 @@ func CheckCert(server, port, ip string) TlsCert {
 		if err != nil {
 			fmt.Printf("Hostname doesn't match with certificate: %v\n", err.Error())
 		} else {
-			// fmt.Printf("SNIVerified", server, conn.ConnectionState().PeerCertificates[0].Subject.CommonName)
 			hostnameVerified = true
 			SNIVerified = true
 		}
 
 	}
-	// fmt.Printf("ServerName: %v\n", conn.ConnectionState().)
 	expiry := conn.ConnectionState().PeerCertificates[0].NotAfter
 	expired := expiry.Before(time.Now())
-	// expiredString := string(colorGreen) + "false" + string(colorReset)
-	// if expired {
-	// 	expiredString = string(colorRed) + "true" + string(colorReset)
-	// }
-	// fmt.Printf("HostnameVerified: %v\nSubject CN: %v\nDNSNames: %v\nIPAddr: %v\nIssuer: %s\nExpiry: %v\nExpired: %v\n\n", hostnameVerified, conn.ConnectionState().PeerCertificates[0].Subject.CommonName, conn.ConnectionState().PeerCertificates[0].DNSNames, conn.ConnectionState().PeerCertificates[0].IPAddresses, conn.ConnectionState().PeerCertificates[0].Issuer, expiry.Format(time.RFC850), expiredString)
-	// fmt.Printf("-- %+v\n", conn.ConnectionState().PeerCertificates[0])
 	cert := TlsCert{
 		HostNameVerified: hostnameVerified,
 		SubjectCN:        conn.ConnectionState().PeerCertificates[0].Subject.CommonName,

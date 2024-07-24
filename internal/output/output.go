@@ -1,3 +1,4 @@
+// package output holds the output logic
 package output
 
 import (
@@ -16,11 +17,10 @@ var (
 	colorReset = "\033[0m"
 	colorRed   = "\033[31m"
 	colorGreen = "\033[32m"
-	// colorYellow = "\033[33m"
 )
 
+// ShowCertTable will print the table to the console
 func ShowCertTable(data []certs.TlsCert) {
-	//table
 	table := simpletable.New()
 	table.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
@@ -52,8 +52,13 @@ func ShowCertTable(data []certs.TlsCert) {
 	fmt.Println(table.String())
 }
 
+// TlsPageData holds the data for the html page
+type TlsPageData struct {
+	TlsCerts []certs.TlsCert
+}
+
+// CreateOutFile will create the output file
 func CreateOutFile(data []certs.TlsCert, fileName string, templateFile string, Assets embed.FS) {
-	// t, _ := template.ParseFiles("certs.tmpl")
 	t, _ := template.ParseFS(Assets, templateFile)
 	f, err := os.Create(fileName)
 	if err != nil {
@@ -61,7 +66,7 @@ func CreateOutFile(data []certs.TlsCert, fileName string, templateFile string, A
 		return
 	}
 	defer f.Close()
-	err = t.Execute(f, certs.TlsPageData{
+	err = t.Execute(f, TlsPageData{
 		TlsCerts: data,
 	})
 	if err != nil {
@@ -71,11 +76,13 @@ func CreateOutFile(data []certs.TlsCert, fileName string, templateFile string, A
 
 }
 
-type Meta struct {
+// JsonMeta holds the metadata
+type JsonMeta struct {
 	Certs    []certs.TlsCert `json:"certs"`
 	DateTime time.Time       `json:"dateTime"`
 }
 
+// CreateJsonFile will create the json file
 func CreateJsonFile(data []certs.TlsCert, fileName string) {
 	f, err := os.Create(fileName)
 	if err != nil {
@@ -83,7 +90,7 @@ func CreateJsonFile(data []certs.TlsCert, fileName string) {
 		return
 	}
 	defer f.Close()
-	meta := Meta{
+	meta := JsonMeta{
 		Certs:    data,
 		DateTime: time.Now(),
 	}
@@ -95,18 +102,23 @@ func CreateJsonFile(data []certs.TlsCert, fileName string) {
 	f.Write(jsonData)
 }
 
+// exp formats the expired status
 func exp(s bool) string {
 	if s {
 		return fmt.Sprintf("%s%v%s", colorRed, s, colorReset)
 	}
 	return fmt.Sprintf("%s%v%s", colorGreen, s, colorReset)
 }
+
+// valid formats the valid status
 func valid(s bool) string {
 	if !s {
 		return fmt.Sprintf("%s%v%s", colorRed, s, colorReset)
 	}
 	return fmt.Sprintf("%s%v%s", colorGreen, s, colorReset)
 }
+
+// truncateText will truncate the text to given size
 func truncateText(s string, max int) string {
 	if max >= len(s) {
 		return s

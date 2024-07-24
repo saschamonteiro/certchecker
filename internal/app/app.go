@@ -1,3 +1,4 @@
+// package app holds the application business logic
 package app
 
 import (
@@ -13,6 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// StartTlsCollect will start the scan for TLS certificates on the specified networks/ports
 func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound bool, Assets embed.FS, htmlOut string, jsonOut string) {
 	cidrAdd := strings.Split(cidrAddressList, ",")
 	allHosts := []string{}
@@ -61,6 +63,7 @@ func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound boo
 	}
 }
 
+// findHostCerts will scan a host for TLS certs
 func findHostCerts(ip string, ports []string, skipNoDnsFound bool) []certs.TlsCert {
 	serveraddr, err := net.LookupAddr(ip)
 	cres := []certs.TlsCert{}
@@ -86,12 +89,12 @@ func findHostCerts(ip string, ports []string, skipNoDnsFound bool) []certs.TlsCe
 	return cres
 }
 
+// hostsFromCIDR will return a list of hosts from a CIDR
 func hostsFromCIDR(cidr string) ([]string, error) {
 	ip, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return nil, err
 	}
-
 	var ips []string
 	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); inc(ip) {
 		ips = append(ips, ip.String())
@@ -102,6 +105,7 @@ func hostsFromCIDR(cidr string) ([]string, error) {
 	return ips[1 : len(ips)-1], nil
 }
 
+// inc will increment an IP
 func inc(ip net.IP) {
 	for j := len(ip) - 1; j >= 0; j-- {
 		ip[j]++
