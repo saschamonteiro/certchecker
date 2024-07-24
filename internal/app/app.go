@@ -15,7 +15,7 @@ import (
 )
 
 // StartTlsCollect will start the scan for TLS certificates on the specified networks/ports
-func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound bool, Assets embed.FS, htmlOut string, jsonOut string) {
+func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound bool, Assets embed.FS, htmlOut string, jsonOut string, concurrent int) {
 	cidrAdd := strings.Split(cidrAddressList, ",")
 	allHosts := []string{}
 	for _, cidrAddress := range cidrAdd {
@@ -26,7 +26,7 @@ func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound boo
 	g, ctx := errgroup.WithContext(context.Background())
 	resultChan := make(chan []certs.TlsCert, len(allHosts)*len(ports))
 	result := make([]certs.TlsCert, 0)
-	g.SetLimit(128)
+	g.SetLimit(concurrent)
 	fmt.Printf("Scanning CIDRs:%v [ports:%s], please wait ", cidrAddressList, portList)
 	for _, host := range allHosts {
 		a := host
