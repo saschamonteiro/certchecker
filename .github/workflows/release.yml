@@ -28,4 +28,3 @@ jobs:
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "certchecker_linux"
-        token: ${{ secrets.GITHUB_TOKEN }}
