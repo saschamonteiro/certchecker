@@ -20,6 +20,11 @@ This is written in GO and the assets are currently only build for Linux amd64.
 #multiple subnets, multiple ports, output to console only
 ./certchecker_linux -cidr=10.10.10.0/24,10.10.20.0/24 -ports=443,8443
 ```
+## Output
+### Console
+The certificates will be shown in a table like so  
+║ HostIP:Port │ HostDNS (reverse) │ DNS Match Cert │ SNI Verified │ CertDNSNames │ Subject Common Name │ Issuer  │ Expiry ↓ │ Expired ║
+
 
 ## Build
 ### Build binary for your local architecture
