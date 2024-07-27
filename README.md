@@ -5,9 +5,28 @@ A utility to scan for TLS certificates in a network segment in CIDR format to qu
 
 This is written in GO and the assets are currently only build for Linux amd64.  
 
-The concurrency for host cert checking is currently set to 128.
+The concurrency for host cert checking is currently set to 128, tested 1024 which is faster.
 
 ## Usage
+
+### Command Flags
+```
+Usage information:
+  -cidr string
+    	network cidr list (default "192.168.10.0/24,192.168.11.0/24")
+  -conc int
+    	concurrent connections (default 128)
+  -html string
+    	html output file
+  -json string
+    	json output file
+  -ports string
+    	tcp port list (default "443,636,587,8443")
+  -skipnodns
+    	skip no dns found
+  -v	version
+```
+
 ### Linux amd64
 ```
 #single subnet, single port, output to console only
@@ -21,6 +40,9 @@ The concurrency for host cert checking is currently set to 128.
 
 #multiple subnets, multiple ports, output to console only
 ./certchecker_linux -cidr=10.10.10.0/24,10.10.20.0/24 -ports=443,8443
+
+#multiple subnets, multiple ports, output to console only, 1024 concurrent checks
+./certchecker_linux -cidr=10.10.10.0/24,10.10.20.0/24 -ports=443,8443 -conc=1024
 ```
 ## Output
 ### Console

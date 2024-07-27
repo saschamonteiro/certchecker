@@ -73,7 +73,7 @@ func CreateOutFile(data []certs.TlsCert, fileName string, templateFile string, A
 		fmt.Printf("error execute template: %v\n", err)
 		return
 	}
-
+	fmt.Printf("Output file created: %s\n", fileName)
 }
 
 // JsonMeta holds the metadata
@@ -99,7 +99,12 @@ func CreateJsonFile(data []certs.TlsCert, fileName string) {
 		fmt.Println("error parsing data to json: ", err)
 		return
 	}
-	f.Write(jsonData)
+	_, err = f.Write(jsonData)
+	if err != nil {
+		fmt.Println("error writing data to file: ", err)
+		return
+	}
+	fmt.Printf("Output file created: %s\n", fileName)
 }
 
 // exp formats the expired status
