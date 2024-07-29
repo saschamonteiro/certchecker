@@ -28,7 +28,9 @@ func main() {
 	skipNoDnsFound := flag.Bool("skipnodns", false, "skip no dns found")
 	htmlOut := flag.String("html", "", "html output file")
 	jsonOut := flag.String("json", "", "json output file")
-	concurrent := flag.Int("conc", 128, "concurrent connections")
+	concurrent := flag.Int("conc", 512, "concurrent connections")
+	debug := flag.Bool("debug", false, "debug")
+	dialTimeout := flag.Int("t", 3, "dial timeout in seconds")
 	ver := flag.Bool("v", false, "version")
 	flag.Parse()
 	if *ver {
@@ -36,7 +38,18 @@ func main() {
 		fmt.Printf("build time: %s\n", buildTime)
 		os.Exit(0)
 	}
+	appProps := app.AppProps{
+		CidrAddressList: *cidrAddressList,
+		PortList:        *portList,
+		SkipNoDnsFound:  *skipNoDnsFound,
+		Assets:          Assets,
+		HtmlOut:         *htmlOut,
+		JsonOut:         *jsonOut,
+		Concurrent:      *concurrent,
+		Debug:           *debug,
+		DialTimeout:     *dialTimeout,
+	}
 
-	app.StartTlsCollect(*cidrAddressList, *portList, *skipNoDnsFound, Assets, *htmlOut, *jsonOut, *concurrent)
+	app.StartTlsCollect(appProps)
 
 }

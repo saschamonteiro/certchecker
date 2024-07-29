@@ -8,30 +8,47 @@ import (
 	"net"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/saschamonteiro/certchecker/internal/certs"
 	"github.com/saschamonteiro/certchecker/internal/output"
 	"golang.org/x/sync/errgroup"
 )
 
+type AppProps struct {
+	CidrAddressList string
+	PortList        string
+	SkipNoDnsFound  bool
+	Assets          embed.FS
+	HtmlOut         string
+	JsonOut         string
+	Concurrent      int
+	Debug           bool
+	DialTimeout     int
+}
+
 // StartTlsCollect will start the scan for TLS certificates on the specified networks/ports
-func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound bool, Assets embed.FS, htmlOut string, jsonOut string, concurrent int) {
-	cidrAdd := strings.Split(cidrAddressList, ",")
+func StartTlsCollect(app AppProps) {
+	cidrAdd := strings.Split(app.CidrAddressList, ",")
 	allHosts := []string{}
 	for _, cidrAddress := range cidrAdd {
 		hosts, _ := hostsFromCIDR(cidrAddress)
 		allHosts = append(allHosts, hosts...)
 	}
-	ports := strings.Split(portList, ",")
+	ports := strings.Split(app.PortList, ",")
 	g, ctx := errgroup.WithContext(context.Background())
 	resultChan := make(chan []certs.TlsCert, len(allHosts)*len(ports))
 	result := make([]certs.TlsCert, 0)
-	g.SetLimit(concurrent)
-	fmt.Printf("Scanning CIDRs:%v [ports:%s], please wait ", cidrAddressList, portList)
+	g.SetLimit(app.Concurrent)
+	if len(allHosts) > 1024 {
+		fmt.Printf("WARNING: this may be too many hosts (%v) to scan due to ARP thresholds\n", len(allHosts))
+	}
+	fmt.Printf("Scanning CIDRs:%v [hosts:%v] [ports:%s], please wait ", app.CidrAddressList, len(allHosts), app.PortList)
+	start := time.Now()
 	for _, host := range allHosts {
 		a := host
 		g.Go(func() error {
-			cres := findHostCerts(a, ports, skipNoDnsFound)
+			cres := findHostCerts(a, ports, app.SkipNoDnsFound, app.Debug, app.DialTimeout)
 			select {
 			case resultChan <- cres:
 			case <-ctx.Done():
@@ -50,27 +67,28 @@ func StartTlsCollect(cidrAddressList string, portList string, skipNoDnsFound boo
 	for val := range resultChan {
 		result = append(result, val...)
 	}
-	fmt.Printf("\nFound %v TLS Certs\n", len(result))
+	duration := time.Since(start).Round(time.Second)
+	fmt.Printf("\nFound %v TLS Certs in %v\n", len(result), duration)
 	sort.Slice(result, func(i, j int) bool { return result[i].Expiry.Before(result[j].Expiry) })
 
 	output.ShowCertTable(result)
 
-	if htmlOut != "" {
-		output.CreateOutFile(result, htmlOut, "certs_html.tmpl", Assets)
+	if app.HtmlOut != "" {
+		output.CreateOutFile(result, app.HtmlOut, "certs_html.tmpl", app.Assets)
 	}
-	if jsonOut != "" {
-		output.CreateJsonFile(result, jsonOut)
+	if app.JsonOut != "" {
+		output.CreateJsonFile(result, app.JsonOut)
 	}
 }
 
 // findHostCerts will scan a host for TLS certs
-func findHostCerts(ip string, ports []string, skipNoDnsFound bool) []certs.TlsCert {
+func findHostCerts(ip string, ports []string, skipNoDnsFound bool, debug bool, dialTimeout int) []certs.TlsCert {
 	serveraddr, err := net.LookupAddr(ip)
 	cres := []certs.TlsCert{}
 	if err == nil && len(serveraddr) > 0 {
 		serverN := strings.TrimRight(serveraddr[0], ".")
 		for _, port := range ports {
-			c := certs.CheckCert(serverN, port, ip)
+			c := certs.CheckCert(serverN, port, ip, debug, dialTimeout)
 			if c.Issuer != "" {
 				cres = append(cres, c)
 			}
@@ -80,12 +98,13 @@ func findHostCerts(ip string, ports []string, skipNoDnsFound bool) []certs.TlsCe
 			return nil
 		}
 		for _, port := range ports {
-			c := certs.CheckCert(ip, port, ip)
+			c := certs.CheckCert(ip, port, ip, debug, dialTimeout)
 			if c.Issuer != "" {
 				cres = append(cres, c)
 			}
 		}
 	}
+	// fmt.Printf("Host[%s] certs[%v]\n", ip, len(cres))
 	return cres
 }
 

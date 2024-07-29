@@ -25,21 +25,32 @@ type TlsCert struct {
 }
 
 // CheckCert will connect to the host and check if the certificate is valid
-func CheckCert(server, port, ip string) TlsCert {
+func CheckCert(server, port, ip string, debug bool, dialTimeout int) TlsCert {
+	if debug {
+		fmt.Printf("CheckCert %s %s:%s\n", server, ip, port)
+	}
 	hostnameVerified := false
 	SNIVerified := false
 	conf := &tls.Config{InsecureSkipVerify: false}
 	if server != ip {
 		conf.ServerName = server
 	}
-	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: 1 * time.Second}, "tcp", ip+":"+port, conf)
+	conn, err := tls.DialWithDialer(&net.Dialer{Timeout: time.Duration(dialTimeout) * time.Second}, "tcp", ip+":"+port, conf)
 	if err != nil {
-		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: 1 * time.Second}, "tcp", ip+":"+port, &tls.Config{InsecureSkipVerify: true})
+		if debug {
+			fmt.Printf("[%s] Dial1 [%v] err: %v\n", ip, time.Duration(dialTimeout)*time.Second, err.Error())
+		}
+		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: time.Duration(dialTimeout) * time.Second}, "tcp", ip+":"+port, &tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			if strings.Contains(err.Error(), "network is unreachable") || strings.Contains(err.Error(), "i/o timeout") || strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "no such host") || strings.Contains(err.Error(), "no route to host") {
+				if debug {
+					fmt.Printf("[%s] Dial2 err: %v\n", ip, err.Error())
+				}
 				return TlsCert{}
 			} else {
-				fmt.Printf("Server doesn't support SSL certificate err: %v\n", err.Error())
+				if debug {
+					fmt.Printf("[%s] Server doesn't support SSL certificate err: %v\n", ip, err.Error())
+				}
 			}
 			return TlsCert{}
 		} else {
@@ -57,7 +68,7 @@ func CheckCert(server, port, ip string) TlsCert {
 
 		err = conn.VerifyHostname(strings.Split(server, ":")[0])
 		if err != nil {
-			fmt.Printf("Hostname doesn't match with certificate: %v\n", err.Error())
+			fmt.Printf("[%s] Hostname doesn't match with certificate: %v\n", ip, err.Error())
 		} else {
 			hostnameVerified = true
 			SNIVerified = true
